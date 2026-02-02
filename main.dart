@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:shared_preferences/shared_preferences.dart'; // 導入記憶套件
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() => runApp(DividendCalcApp());
 
@@ -8,12 +8,13 @@ class DividendCalcApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: '專業配息試算系統',
       theme: ThemeData(primarySwatch: Colors.blueGrey, useMaterial3: true),
       home: CalcScreen(),
     );
   }
 }
-
 class CalcScreen extends StatefulWidget {
   @override
   _CalcScreenState createState() => _CalcScreenState();
@@ -38,40 +39,36 @@ class _CalcScreenState extends State<CalcScreen> {
   @override
   void initState() {
     super.initState();
-    _loadSavedData(); // App 一開啟就讀取記憶
+    _loadSavedData();
   }
 
-  // --- 記憶功能：讀取資料 ---
+  // --- 僅讀取：匯率、淨值、配息 ---
   Future<void> _loadSavedData() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      premiumController.text = prefs.getString('saved_premium') ?? "";
       exchangeRateController.text = prefs.getString('saved_rate') ?? "31.5";
       navController.text = prefs.getString('saved_nav') ?? "";
       divController.text = prefs.getString('saved_div') ?? "";
-      selectedCurrency = prefs.getString('saved_currency') ?? "USD";
     });
   }
 
-  // --- 記憶功能：儲存資料 ---
+  // --- 僅儲存：匯率、淨值、配息 ---
   Future<void> _saveData() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('saved_premium', premiumController.text);
     await prefs.setString('saved_rate', exchangeRateController.text);
     await prefs.setString('saved_nav', navController.text);
     await prefs.setString('saved_div', divController.text);
-    await prefs.setString('saved_currency', selectedCurrency);
   }
 
   Future<void> _launchUrl(String urlString) async {
     final Uri url = Uri.parse(urlString);
     if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
-      setState(() => result = "無法開啟網頁，請檢查連線");
+      setState(() => result = "無法開啟網頁");
     }
   }
 
   void runCalculation() {
-    _saveData(); // 點擊計算時同步存檔
+    _saveData(); // 計算時儲存關鍵數值
     
     double premium = double.tryParse(premiumController.text) ?? 0;
     double rate = double.tryParse(exchangeRateController.text) ?? 1.0;
@@ -98,7 +95,6 @@ class _CalcScreenState extends State<CalcScreen> {
 
     double feeAmount = premium * feeRate;
     double netPremium = premium - feeAmount;
-
     double units = (selectedCurrency == "TWD") ? (netPremium / rate) / nav : netPremium / nav;
     double monthlyUSD = units * divPerUnit;
     double monthlyTWD = monthlyUSD * rate;
@@ -107,9 +103,9 @@ class _CalcScreenState extends State<CalcScreen> {
 
     setState(() {
       if (selectedCurrency == "TWD") {
-        result = "【台幣投入】\n手續費率：${(feeRate * 100).toInt()}%\n投入標的金額：${netPremium.toStringAsFixed(0)} TWD\n購入單位數：${units.toStringAsFixed(4)} 單位\n-----------------------------------\n預計每月領取：${monthlyTWD.toStringAsFixed(0)} TWD\n預計每年合計：${yearlyTWD.toStringAsFixed(0)} TWD";
+        result = "【台幣投入結論】\n手續費率：${(feeRate * 100).toInt()}%\n淨投入金額：${netPremium.toStringAsFixed(0)} TWD\n購入單位數：${units.toStringAsFixed(4)}\n-----------------------------------\n預計每月領取：${monthlyTWD.toStringAsFixed(0)} TWD\n預計每年合計：${yearlyTWD.toStringAsFixed(0)} TWD";
       } else {
-        result = "【美元投入】\n手續費率：${(feeRate * 100).toInt()}%\n投入標的金額：${netPremium.toStringAsFixed(2)} USD\n購入單位數：${units.toStringAsFixed(4)} 單位\n-----------------------------------\n預計每月領取：${monthlyUSD.toStringAsFixed(2)} USD\n(約合台幣：${monthlyTWD.toStringAsFixed(0)} TWD)\n\n預計每年合計：${yearlyUSD.toStringAsFixed(2)} USD\n(約合台幣：${yearlyTWD.toStringAsFixed(0)} TWD)";
+        result = "【美元投入結論】\n手續費率：${(feeRate * 100).toInt()}%\n淨投入金額：${netPremium.toStringAsFixed(2)} USD\n購入單位數：${units.toStringAsFixed(4)}\n-----------------------------------\n預計每月領取：${monthlyUSD.toStringAsFixed(2)} USD\n(約合台幣：${monthlyTWD.toStringAsFixed(0)} TWD)\n\n預計每年合計：${yearlyUSD.toStringAsFixed(2)} USD\n(約合台幣：${yearlyTWD.toStringAsFixed(0)} TWD)";
       }
     });
   }
@@ -117,7 +113,7 @@ class _CalcScreenState extends State<CalcScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('保險基金配息試算'), centerTitle: true),
+      appBar: AppBar(title: Text('專業配息試算系統'), centerTitle: true),
       body: SingleChildScrollView(
         padding: EdgeInsets.all(20),
         child: Column(
@@ -131,21 +127,22 @@ class _CalcScreenState extends State<CalcScreen> {
               ),
             ),
             SizedBox(height: 25),
-            Text("1. 選擇標的自動帶入配息並確認淨值", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            Text("1. 選擇標的 (自動帶入配息並查詢淨值)", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
             SizedBox(height: 10),
             Container(
               padding: EdgeInsets.symmetric(horizontal: 12),
               decoration: BoxDecoration(border: Border.all(color: Colors.orange.shade800, width: 2), borderRadius: BorderRadius.circular(10), color: Colors.orange.shade50),
               child: DropdownButtonHideUnderline(
                 child: DropdownButton<Map<String, dynamic>>(
-                  hint: Text("點此選擇基金標的", style: TextStyle(color: Colors.orange.shade900)),
+                  hint: Text("選擇基金標的", style: TextStyle(color: Colors.orange.shade900)),
                   isExpanded: true,
                   value: selectedFund,
-                  items: fundOptions.map((fund) => DropdownMenuItem(value: fund, child: Text(fund['name']!, style: TextStyle(fontSize: 13), overflow: TextOverflow.ellipsis))).toList(),
+                  items: fundOptions.map((fund) => DropdownMenuItem(value: fund, child: Text(fund['name']!, style: TextStyle(fontSize: 13)))).toList(),
                   onChanged: (val) {
                     setState(() {
                       selectedFund = val;
                       divController.text = val!['defaultDiv'];
+                      _saveData(); // 選擇基金後同步記憶配息金額
                       _launchUrl(val['url']!); 
                     });
                   },
@@ -153,17 +150,19 @@ class _CalcScreenState extends State<CalcScreen> {
               ),
             ),
             SizedBox(height: 25),
-            Text("2. 輸入數據進行試算 (自動記憶中)", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.blueGrey)),
+            Text("2. 輸入數據 (保費不記憶，匯率/淨值/配息自動記憶)", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.blueGrey)),
             SizedBox(height: 10),
-            inputField(premiumController, "投入保費總額 ($selectedCurrency)"),
-            inputField(exchangeRateController, "參考匯率 (USD/TWD)"),
-            inputField(navController, "基金當前淨值 (USD)"),
-            inputField(divController, "每單位分配金額 (USD)"),
+            // 保費欄位：不儲存
+            inputField(premiumController, "投入保費總額 ($selectedCurrency)", false),
+            // 以下三個欄位：自動儲存
+            inputField(exchangeRateController, "參考匯率 (USD/TWD)", true),
+            inputField(navController, "基金當前淨值 (USD)", true),
+            inputField(divController, "每單位分配金額 (USD)", true),
             SizedBox(height: 20),
             ElevatedButton(
               style: ElevatedButton.styleFrom(minimumSize: Size(double.infinity, 55), backgroundColor: Colors.blueGrey.shade800, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
               onPressed: runCalculation, 
-              child: Text("執行試算並儲存數據", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold))
+              child: Text("執行試算", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold))
             ),
             SizedBox(height: 25),
             Container(
@@ -178,13 +177,15 @@ class _CalcScreenState extends State<CalcScreen> {
     );
   }
 
-  Widget inputField(TextEditingController controller, String label) {
+  Widget inputField(TextEditingController controller, String label, bool shouldSave) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 15),
       child: TextField(
         controller: controller,
         keyboardType: TextInputType.numberWithOptions(decimal: true),
-        onChanged: (v) => _saveData(), // 內容變動時也自動存檔
+        onChanged: (v) {
+          if (shouldSave) _saveData(); // 僅在指定的欄位變動時儲存
+        },
         decoration: InputDecoration(labelText: label, border: OutlineInputBorder(), filled: true, fillColor: Colors.white),
       ),
     );
