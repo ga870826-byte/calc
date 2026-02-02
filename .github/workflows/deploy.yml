@@ -11,7 +11,7 @@ jobs:
         with:
           channel: 'stable'
       - run: flutter pub get
-      - run: flutter build web --release --base-href /calc/
+      - run: flutter build web --release --base-href /calc/ --target main.dart
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
         with:
