@@ -10,7 +10,10 @@ class DividendCalcApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: '基金配息試算',
-      theme: ThemeData(primarySwatch: Colors.blueGrey, useMaterial3: true),
+      theme: ThemeData(
+        primarySwatch: Colors.blueGrey,
+        useMaterial3: true,
+      ),
       home: CalcScreen(),
     );
   }
@@ -31,8 +34,8 @@ class _CalcScreenState extends State<CalcScreen> {
   String result = "請輸入數據並執行試算";
 
   final List<Map<String, dynamic>> fundOptions = [
-    {"name": "安聯收益成長-AM穩定月配息股美元", "url": "https://www.fundswap.com.tw/trade/funds/TF60/", "defaultDiv": "0.055"},
-    {"name": "景順環球高評級企業債券E-穩定月配息股美元", "url": "https://www.fundswap.com.tw/trade/funds/IVF2/", "defaultDiv": "0.051"},
+    {"name": "安聯收益成長-AM穩定月配息股美元", "url": "https://invest.fubonlife.com.tw/content.html?sUrl=$W$WB$WB01]DJHTM{A}TL^64-DSP5", "defaultDiv": "0.055"},
+    {"name": "景順環球高評級企業債券E-穩定月配息股美元", "url": "https://invest.fubonlife.com.tw/content.html?sUrl=$W$WB$WB01]DJHTM{A}CT^P0-IGB5: "0.051"},
   ];
 
   Map<String, dynamic>? selectedFund;
@@ -116,29 +119,19 @@ class _CalcScreenState extends State<CalcScreen> {
         padding: EdgeInsets.all(20),
         child: Column(
           children: [
-           SegmentedButton<String>(
-  // 1. 關鍵修正：關閉選中時的勾勾圖示，騰出空間給文字
-  showSelectedIcon: false, 
-  
-  // 2. 調整樣式：讓按鈕內的文字可以更靠邊，並縮小間距
-  style: SegmentedButton.styleFrom(
-    padding: EdgeInsets.symmetric(horizontal: 5), // 縮減左右內邊距
-    visualDensity: VisualDensity.compact,        // 緊湊模式
-  ),
-
-  segments: [
-    ButtonSegment(
-      value: 'TWD', 
-      label: Text('台幣投入', style: TextStyle(fontSize: 14)) // 可以微調字型大小確保相容性
-    ), 
-    ButtonSegment(
-      value: 'USD', 
-      label: Text('美元投入', style: TextStyle(fontSize: 14))
-    )
-  ],
-  selected: {selectedCurrency},
-  onSelectionChanged: (val) => setState(() => selectedCurrency = val.first),
-),
+            SegmentedButton<String>(
+              showSelectedIcon: false,
+              style: SegmentedButton.styleFrom(
+                padding: EdgeInsets.symmetric(horizontal: 5),
+                visualDensity: VisualDensity.compact,
+              ),
+              segments: [
+                ButtonSegment(value: 'TWD', label: Text('台幣投入', style: TextStyle(fontSize: 14))),
+                ButtonSegment(value: 'USD', label: Text('美元投入', style: TextStyle(fontSize: 14))),
+              ],
+              selected: {selectedCurrency},
+              onSelectionChanged: (val) => setState(() => selectedCurrency = val.first),
+            ),
             SizedBox(height: 20),
             DropdownButtonFormField<Map<String, dynamic>>(
               decoration: InputDecoration(labelText: "1. 選擇標的", border: OutlineInputBorder()),
@@ -153,13 +146,36 @@ class _CalcScreenState extends State<CalcScreen> {
               },
             ),
             SizedBox(height: 15),
-            TextField(controller: premiumController, decoration: InputDecoration(labelText: "投入保費 ($selectedCurrency)", border: OutlineInputBorder()), keyboardType: TextInputType.withOptions(decimal: true),
+            TextField(
+              controller: premiumController,
+              decoration: InputDecoration(labelText: "投入保費 ($selectedCurrency)", border: OutlineInputBorder()),
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              enableInteractiveSelection: true,
+            ),
             SizedBox(height: 15),
-            TextField(controller: exchangeRateController, decoration: InputDecoration(labelText: "參考匯率 (USD/TWD)", border: OutlineInputBorder()), keyboardType: TextInputType.withOptions(decimal: true), onChanged: (v) => _saveData()),
+            TextField(
+              controller: exchangeRateController,
+              decoration: InputDecoration(labelText: "參考匯率 (USD/TWD)", border: OutlineInputBorder()),
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              enableInteractiveSelection: true,
+              onChanged: (v) => _saveData(),
+            ),
             SizedBox(height: 15),
-            TextField(controller: navController, decoration: InputDecoration(labelText: "當前淨值 (USD)", border: OutlineInputBorder()), keyboardType: TextInputType.withOptions(decimal: true), onChanged: (v) => _saveData()),
+            TextField(
+              controller: navController,
+              decoration: InputDecoration(labelText: "當前淨值 (USD)", border: OutlineInputBorder()),
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              enableInteractiveSelection: true,
+              onChanged: (v) => _saveData(),
+            ),
             SizedBox(height: 15),
-            TextField(controller: divController, decoration: InputDecoration(labelText: "單位配息 (USD)", border: OutlineInputBorder()), keyboardType: TextInputType.withOptions(decimal: true), onChanged: (v) => _saveData()),
+            TextField(
+              controller: divController,
+              decoration: InputDecoration(labelText: "單位配息 (USD)", border: OutlineInputBorder()),
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              enableInteractiveSelection: true,
+              onChanged: (v) => _saveData(),
+            ),
             SizedBox(height: 20),
             ElevatedButton(
               style: ElevatedButton.styleFrom(minimumSize: Size(double.infinity, 50), backgroundColor: Colors.blueGrey),
@@ -167,7 +183,12 @@ class _CalcScreenState extends State<CalcScreen> {
               child: Text("執行試算", style: TextStyle(color: Colors.white, fontSize: 18)),
             ),
             SizedBox(height: 20),
-            Container(width: double.infinity, padding: EdgeInsets.all(15), decoration: BoxDecoration(color: Colors.grey[200], borderRadius: BorderRadius.circular(10)), child: Text(result)),
+            Container(
+              width: double.infinity, 
+              padding: EdgeInsets.all(15), 
+              decoration: BoxDecoration(color: Colors.grey[200], borderRadius: BorderRadius.circular(10)), 
+              child: Text(result)
+            ),
           ],
         ),
       ),
