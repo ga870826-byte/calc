@@ -116,11 +116,29 @@ class _CalcScreenState extends State<CalcScreen> {
         padding: EdgeInsets.all(20),
         child: Column(
           children: [
-            SegmentedButton<String>(
-              segments: [ButtonSegment(value: 'TWD', label: Text('台幣版')), ButtonSegment(value: 'USD', label: Text('美元版'))],
-              selected: {selectedCurrency},
-              onSelectionChanged: (val) => setState(() => selectedCurrency = val.first),
-            ),
+           SegmentedButton<String>(
+  // 1. 關鍵修正：關閉選中時的勾勾圖示，騰出空間給文字
+  showSelectedIcon: false, 
+  
+  // 2. 調整樣式：讓按鈕內的文字可以更靠邊，並縮小間距
+  style: SegmentedButton.styleFrom(
+    padding: EdgeInsets.symmetric(horizontal: 5), // 縮減左右內邊距
+    visualDensity: VisualDensity.compact,        // 緊湊模式
+  ),
+
+  segments: [
+    ButtonSegment(
+      value: 'TWD', 
+      label: Text('台幣投入', style: TextStyle(fontSize: 14)) // 可以微調字型大小確保相容性
+    ), 
+    ButtonSegment(
+      value: 'USD', 
+      label: Text('美元投入', style: TextStyle(fontSize: 14))
+    )
+  ],
+  selected: {selectedCurrency},
+  onSelectionChanged: (val) => setState(() => selectedCurrency = val.first),
+),
             SizedBox(height: 20),
             DropdownButtonFormField<Map<String, dynamic>>(
               decoration: InputDecoration(labelText: "1. 選擇標的", border: OutlineInputBorder()),
