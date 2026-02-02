@@ -1,0 +1,23 @@
+name: Deploy Flutter Web
+on:
+  push:
+    branches: [ main ]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+      - run: |
+          echo "import 'package:flutter/material.dart';
+          import 'package:url_launcher/url_launcher.dart';
+          import 'package:shared_preferences/shared_preferences.dart';
+          $(cat main.dart)" > main.dart
+      - run: flutter build web --release --base-href /calc/
+      - name: Deploy
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./build/web
