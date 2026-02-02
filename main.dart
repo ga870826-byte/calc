@@ -9,12 +9,13 @@ class DividendCalcApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: '專業配息試算系統',
+      title: '基金配息試算',
       theme: ThemeData(primarySwatch: Colors.blueGrey, useMaterial3: true),
       home: CalcScreen(),
     );
   }
 }
+
 class CalcScreen extends StatefulWidget {
   @override
   _CalcScreenState createState() => _CalcScreenState();
@@ -42,7 +43,6 @@ class _CalcScreenState extends State<CalcScreen> {
     _loadSavedData();
   }
 
-  // --- 僅讀取：匯率、淨值、配息 ---
   Future<void> _loadSavedData() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
@@ -52,7 +52,6 @@ class _CalcScreenState extends State<CalcScreen> {
     });
   }
 
-  // --- 僅儲存：匯率、淨值、配息 ---
   Future<void> _saveData() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('saved_rate', exchangeRateController.text);
@@ -68,8 +67,7 @@ class _CalcScreenState extends State<CalcScreen> {
   }
 
   void runCalculation() {
-    _saveData(); // 計算時儲存關鍵數值
-    
+    _saveData();
     double premium = double.tryParse(premiumController.text) ?? 0;
     double rate = double.tryParse(exchangeRateController.text) ?? 1.0;
     double nav = double.tryParse(navController.text) ?? 0;
@@ -117,76 +115,43 @@ class _CalcScreenState extends State<CalcScreen> {
       body: SingleChildScrollView(
         padding: EdgeInsets.all(20),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Center(
-              child: SegmentedButton<String>(
-                segments: [ButtonSegment(value: 'TWD', label: Text('台幣版')), ButtonSegment(value: 'USD', label: Text('美元版'))],
-                selected: {selectedCurrency},
-                onSelectionChanged: (val) => setState(() => selectedCurrency = val.first),
-              ),
+            SegmentedButton<String>(
+              segments: [ButtonSegment(value: 'TWD', label: Text('台幣版')), ButtonSegment(value: 'USD', label: Text('美元版'))],
+              selected: {selectedCurrency},
+              onSelectionChanged: (val) => setState(() => selectedCurrency = val.first),
             ),
-            SizedBox(height: 25),
-            Text("1. 選擇標的 (自動帶入配息並查詢淨值)", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-            SizedBox(height: 10),
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 12),
-              decoration: BoxDecoration(border: Border.all(color: Colors.orange.shade800, width: 2), borderRadius: BorderRadius.circular(10), color: Colors.orange.shade50),
-              child: DropdownButtonHideUnderline(
-                child: DropdownButton<Map<String, dynamic>>(
-                  hint: Text("選擇基金標的", style: TextStyle(color: Colors.orange.shade900)),
-                  isExpanded: true,
-                  value: selectedFund,
-                  items: fundOptions.map((fund) => DropdownMenuItem(value: fund, child: Text(fund['name']!, style: TextStyle(fontSize: 13)))).toList(),
-                  onChanged: (val) {
-                    setState(() {
-                      selectedFund = val;
-                      divController.text = val!['defaultDiv'];
-                      _saveData(); // 選擇基金後同步記憶配息金額
-                      _launchUrl(val['url']!); 
-                    });
-                  },
-                ),
-              ),
+            SizedBox(height: 20),
+            DropdownButtonFormField<Map<String, dynamic>>(
+              decoration: InputDecoration(labelText: "1. 選擇標的", border: OutlineInputBorder()),
+              value: selectedFund,
+              items: fundOptions.map((f) => DropdownMenuItem(value: f, child: Text(f['name'], style: TextStyle(fontSize: 12)))).toList(),
+              onChanged: (val) {
+                setState(() {
+                  selectedFund = val;
+                  divController.text = val!['defaultDiv'];
+                  _launchUrl(val['url']!);
+                });
+              },
             ),
-            SizedBox(height: 25),
-            Text("2. 輸入數據 (保費不記憶，匯率/淨值/配息自動記憶)", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.blueGrey)),
-            SizedBox(height: 10),
-            // 保費欄位：不儲存
-            inputField(premiumController, "投入保費總額 ($selectedCurrency)", false),
-            // 以下三個欄位：自動儲存
-            inputField(exchangeRateController, "參考匯率 (USD/TWD)", true),
-            inputField(navController, "基金當前淨值 (USD)", true),
-            inputField(divController, "每單位分配金額 (USD)", true),
+            SizedBox(height: 15),
+            TextField(controller: premiumController, decoration: InputDecoration(labelText: "投入保費 ($selectedCurrency)", border: OutlineInputBorder()), keyboardType: TextInputType.number),
+            SizedBox(height: 15),
+            TextField(controller: exchangeRateController, decoration: InputDecoration(labelText: "參考匯率 (USD/TWD)", border: OutlineInputBorder()), keyboardType: TextInputType.number, onChanged: (v) => _saveData()),
+            SizedBox(height: 15),
+            TextField(controller: navController, decoration: InputDecoration(labelText: "當前淨值 (USD)", border: OutlineInputBorder()), keyboardType: TextInputType.number, onChanged: (v) => _saveData()),
+            SizedBox(height: 15),
+            TextField(controller: divController, decoration: InputDecoration(labelText: "單位配息 (USD)", border: OutlineInputBorder()), keyboardType: TextInputType.number, onChanged: (v) => _saveData()),
             SizedBox(height: 20),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(minimumSize: Size(double.infinity, 55), backgroundColor: Colors.blueGrey.shade800, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
-              onPressed: runCalculation, 
-              child: Text("執行試算", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold))
+              style: ElevatedButton.styleFrom(minimumSize: Size(double.infinity, 50), backgroundColor: Colors.blueGrey),
+              onPressed: runCalculation,
+              child: Text("執行試算", style: TextStyle(color: Colors.white, fontSize: 18)),
             ),
-            SizedBox(height: 25),
-            Container(
-              width: double.infinity,
-              padding: EdgeInsets.all(20),
-              decoration: BoxDecoration(color: Colors.blueGrey[50], borderRadius: BorderRadius.circular(15), border: Border.all(color: Colors.blueGrey.shade100)),
-              child: Text(result, style: TextStyle(fontSize: 17, height: 1.8, fontWeight: FontWeight.w500)),
-            )
+            SizedBox(height: 20),
+            Container(width: double.infinity, padding: EdgeInsets.all(15), decoration: BoxDecoration(color: Colors.grey[200], borderRadius: BorderRadius.circular(10)), child: Text(result)),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget inputField(TextEditingController controller, String label, bool shouldSave) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 15),
-      child: TextField(
-        controller: controller,
-        keyboardType: TextInputType.numberWithOptions(decimal: true),
-        onChanged: (v) {
-          if (shouldSave) _saveData(); // 僅在指定的欄位變動時儲存
-        },
-        decoration: InputDecoration(labelText: label, border: OutlineInputBorder(), filled: true, fillColor: Colors.white),
       ),
     );
   }
