@@ -33,9 +33,18 @@ class _CalcScreenState extends State<CalcScreen> {
   String selectedCurrency = "USD"; 
   String result = "請輸入數據並執行試算";
 
+  // 使用 r"..." 原始字串來處理含有 $ 符號的網址，避免程式誤認變數
   final List<Map<String, dynamic>> fundOptions = [
-    {"name": "安聯收益成長-AM穩定月配息股美元", "url": "https://invest.fubonlife.com.tw/content.html?sUrl=$W$WB$WB01]DJHTM{A}TL^64-DSP5", "defaultDiv": "0.055"},
-    {"name": "景順環球高評級企業債券E-穩定月配息股美元", "url": "https://invest.fubonlife.com.tw/content.html?sUrl=$W$WB$WB01]DJHTM{A}CT^P0-IGB5: "0.051"},
+    {
+      "name": "安聯收益成長-AM穩定月配息股美元", 
+      "url": r"https://invest.fubonlife.com.tw/content.html?sUrl=$W$WB$WB01]DJHTM{A}TL^64-DSP5", 
+      "defaultDiv": "0.055"
+    },
+    {
+      "name": "景順環球高評級企業債券E-穩定月配息股美元", 
+      "url": r"https://invest.fubonlife.com.tw/content.html?sUrl=$W$WB$WB01]DJHTM{A}CT^P0-IGB5", 
+      "defaultDiv": "0.051"
+    },
   ];
 
   Map<String, dynamic>? selectedFund;
