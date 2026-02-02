@@ -9,7 +9,7 @@ class DividendCalcApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: '基金配息試算',
+      title: '基金配息試算', // 瀏覽器分頁標題
       theme: ThemeData(
         primarySwatch: Colors.blueGrey,
         useMaterial3: true,
@@ -33,16 +33,15 @@ class _CalcScreenState extends State<CalcScreen> {
   String selectedCurrency = "USD"; 
   String result = "請輸入數據並執行試算";
 
-  // 使用 r"..." 原始字串來處理含有 $ 符號的網址，避免程式誤認變數
   final List<Map<String, dynamic>> fundOptions = [
     {
       "name": "安聯收益成長-AM穩定月配息股美元", 
-      "url": r"https://invest.fubonlife.com.tw/content.html?sUrl=$W$WB$WB01]DJHTM{A}TL^64-DSP5", 
+      "url": r"https://www.moneydj.com/funddj/ya/yp010001.djhtm?a=tlz64", 
       "defaultDiv": "0.055"
     },
     {
       "name": "景順環球高評級企業債券E-穩定月配息股美元", 
-      "url": r"https://invest.fubonlife.com.tw/content.html?sUrl=$W$WB$WB01]DJHTM{A}CT^P0-IGB5", 
+      "url": r"https://www.moneydj.com/funddj/ya/yp010001.djhtm?a=ctzP0", 
       "defaultDiv": "0.051"
     },
   ];
@@ -98,109 +97,4 @@ class _CalcScreenState extends State<CalcScreen> {
       else feeRate = 0.05;
     } else {
       if (premium >= 333300) feeRate = 0.02;
-      else if (premium >= 166600) feeRate = 0.03;
-      else if (premium >= 66600) feeRate = 0.04;
-      else feeRate = 0.05;
-    }
-
-    double feeAmount = premium * feeRate;
-    double netPremium = premium - feeAmount;
-    double units = (selectedCurrency == "TWD") ? (netPremium / rate) / nav : netPremium / nav;
-    double monthlyUSD = units * divPerUnit;
-    double monthlyTWD = monthlyUSD * rate;
-    double yearlyUSD = monthlyUSD * 12;
-    double yearlyTWD = yearlyUSD * rate;
-
-    setState(() {
-      if (selectedCurrency == "TWD") {
-        result = "【台幣投入結論】\n手續費率：${(feeRate * 100).toInt()}%\n淨投入金額：${netPremium.toStringAsFixed(0)} TWD\n購入單位數：${units.toStringAsFixed(4)}\n-----------------------------------\n預計每月領取：${monthlyTWD.toStringAsFixed(0)} TWD\n預計每年合計：${yearlyTWD.toStringAsFixed(0)} TWD";
-      } else {
-        result = "【美元投入結論】\n手續費率：${(feeRate * 100).toInt()}%\n淨投入金額：${netPremium.toStringAsFixed(2)} USD\n購入單位數：${units.toStringAsFixed(4)}\n-----------------------------------\n預計每月領取：${monthlyUSD.toStringAsFixed(2)} USD\n(約合台幣：${monthlyTWD.toStringAsFixed(0)} TWD)\n\n預計每年合計：${yearlyUSD.toStringAsFixed(2)} USD\n(約合台幣：${yearlyTWD.toStringAsFixed(0)} TWD)";
-      }
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('專業配息試算系統'), centerTitle: true),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.all(20),
-        child: Column(
-          children: [
-            SegmentedButton<String>(
-              showSelectedIcon: false,
-              style: SegmentedButton.styleFrom(
-                padding: EdgeInsets.symmetric(horizontal: 5),
-                visualDensity: VisualDensity.compact,
-              ),
-              segments: [
-                ButtonSegment(value: 'TWD', label: Text('台幣投入', style: TextStyle(fontSize: 14))),
-                ButtonSegment(value: 'USD', label: Text('美元投入', style: TextStyle(fontSize: 14))),
-              ],
-              selected: {selectedCurrency},
-              onSelectionChanged: (val) => setState(() => selectedCurrency = val.first),
-            ),
-            SizedBox(height: 20),
-            DropdownButtonFormField<Map<String, dynamic>>(
-              decoration: InputDecoration(labelText: "1. 選擇標的", border: OutlineInputBorder()),
-              value: selectedFund,
-              items: fundOptions.map((f) => DropdownMenuItem(value: f, child: Text(f['name'], style: TextStyle(fontSize: 12)))).toList(),
-              onChanged: (val) {
-                setState(() {
-                  selectedFund = val;
-                  divController.text = val!['defaultDiv'];
-                  _launchUrl(val['url']!);
-                });
-              },
-            ),
-            SizedBox(height: 15),
-            TextField(
-              controller: premiumController,
-              decoration: InputDecoration(labelText: "投入保費 ($selectedCurrency)", border: OutlineInputBorder()),
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              enableInteractiveSelection: true,
-            ),
-            SizedBox(height: 15),
-            TextField(
-              controller: exchangeRateController,
-              decoration: InputDecoration(labelText: "參考匯率 (USD/TWD)", border: OutlineInputBorder()),
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              enableInteractiveSelection: true,
-              onChanged: (v) => _saveData(),
-            ),
-            SizedBox(height: 15),
-            TextField(
-              controller: navController,
-              decoration: InputDecoration(labelText: "當前淨值 (USD)", border: OutlineInputBorder()),
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              enableInteractiveSelection: true,
-              onChanged: (v) => _saveData(),
-            ),
-            SizedBox(height: 15),
-            TextField(
-              controller: divController,
-              decoration: InputDecoration(labelText: "單位配息 (USD)", border: OutlineInputBorder()),
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              enableInteractiveSelection: true,
-              onChanged: (v) => _saveData(),
-            ),
-            SizedBox(height: 20),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(minimumSize: Size(double.infinity, 50), backgroundColor: Colors.blueGrey),
-              onPressed: runCalculation,
-              child: Text("執行試算", style: TextStyle(color: Colors.white, fontSize: 18)),
-            ),
-            SizedBox(height: 20),
-            Container(
-              width: double.infinity, 
-              padding: EdgeInsets.all(15), 
-              decoration: BoxDecoration(color: Colors.grey[200], borderRadius: BorderRadius.circular(10)), 
-              child: Text(result)
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
+      else if (premium >= 166600) feeRate =
